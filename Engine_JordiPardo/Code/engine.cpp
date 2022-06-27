@@ -186,6 +186,19 @@ void Init(App* app)
 {
     app->currentRenderTargetMode = RenderTargetsMode::ALBEDO;
 
+
+    app->mode = Mode::FORWARD;
+
+
+    //Directional
+    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(2.5f, 3.0f, 0.0f), vec3(0.2f, 0.250f, 0.8f), vec3(0.9f, 0.9f, 0.9f)));
+    //app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(-2.9f, 2.75f, -2.0f), vec3(1.0f, 0.0f, 1.0f), vec3(0.9f, 0.5f, 0.5f)));
+
+    //Point
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.0f, 0.2f, 0.0f)));
+    //app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.2f, 0.5f)));
+    //app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.33f, 0.2f, 0.05f)));
+
     // TODO: Initialize your resources here!
     // - vertex buffers
     struct VertexV3V2 {
@@ -253,7 +266,7 @@ void Init(App* app)
 
     Entity entity2;
     entity2.position = vec3(2.0f, 0.0f, 0.0f);
-    app->model = LoadModel(app, "Patrick/Patrick.obj");
+    app->model = LoadModel(app, "Primitives/Sphere/sphere.obj");
     entity2.metallic = 1.0f;
     entity2.roughness = 0.75f;
     entity2.modelIndex = app->model;
@@ -261,9 +274,13 @@ void Init(App* app)
 
     //app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
 
-    app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
+    app->texturedMeshProgramIdx = LoadProgram(app, "Shaders/forward_shader.glsl", "FORWARD_SHADER");
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-    LoadProgramAttributes(texturedMeshProgram);
+    LoadProgramAttributes(texturedMeshProgram); 
+    
+    app->sphereMeshProgramIdx = LoadProgram(app, "Shaders/deferred_shader.glsl", "FORWARD_SHADER");
+    Program& sphereMeshProgram = app->programs[app->sphereMeshProgramIdx];
+    LoadProgramAttributes(sphereMeshProgram);
     //texturedMeshProgram.vertexInputLayout.attributes.push_back({ 0,3 });
     //texturedMeshProgram.vertexInputLayout.attributes.push_back({ 2,2 });
 
@@ -275,7 +292,6 @@ void Init(App* app)
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
-    app->mode = Mode_Mesh;
     
 }
 
@@ -342,89 +358,103 @@ void Render(App* app)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
 
-    switch (app->mode)
-    {
-        case Mode_TexturedQuad:
-            {
-                // TODO: Draw your textured quad here!
-                // - clear the framebuffer
-            glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //switch (app->mode)
+    //{
+    //    case Mode_TexturedQuad:
+    //        {
+    //            // TODO: Draw your textured quad here!
+    //            // - clear the framebuffer
+    //        glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
+    //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                // - set the viewport
-            glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+    //            // - set the viewport
+    //        glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-                // - bind the program 
-            Program& programTexturedGeometry = app->programs[app->texturedGeometryProgramIdx];
-            glUseProgram(programTexturedGeometry.handle);
-            glBindVertexArray(app->vao);
+    //            // - bind the program 
+    //        Program& programTexturedGeometry = app->programs[app->texturedGeometryProgramIdx];
+    //        glUseProgram(programTexturedGeometry.handle);
+    //        glBindVertexArray(app->vao);
 
-                // - set the blending state
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glUniform1i(app->programUniformTexture, 0);
-            glActiveTexture(GL_TEXTURE0);
-            GLuint textureHandle = app->textures[app->diceTexIdx].handle;
-            glBindTexture(GL_TEXTURE_2D, textureHandle);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            glBindVertexArray(0);
-            glUseProgram(0);
-                // - bind the texture into unit 0
-                //   (...and make its texture sample from unit 0)
-                // - bind the vao
-                // - glDrawElements() !!!
-            }
-            break;
-        case Mode_Mesh:
-            Program texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-
-
-            glUseProgram(texturedMeshProgram.handle);
-
-            float timeValue = glfwGetTime();
-            float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-            int vertexColorLocation = glGetUniformLocation(texturedMeshProgram.handle, "alpha");
-            glUniform1f(vertexColorLocation, greenValue);
-
-
-            //Matrix
-            float aspectRatio = (float)app->displaySize.x / (float)app->displaySize.y;
-            float znear = 0.1f;
-            float zfar = 1000.0f;
-
-            mat4 projection = glm::perspective(glm::radians(app->camera.zoom), aspectRatio, znear, zfar);
-            mat4 view = app->camera.GetViewMatrix();
-
-            for (int i = 0; i < app->entities.size(); i++)
-            {
-
-                mat4 world = app->entities[i].worldMatrix;
-
-                world = TransformPositionScale(app->entities[i].position, vec3(0.45f));
-
-                int worldMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldMatrix");
-                glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, glm::value_ptr(world));
-
-                mat4 worldViewProjection = projection * view * world;
-
-                int worldProjectionMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldViewProjectionMatrix");
-                glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
-
-                RenderModel(app, app->entities[i], texturedMeshProgram);
-            }
-
-
-           
-
-            break;
+    //            // - set the blending state
+    //        glEnable(GL_BLEND);
+    //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //        glUniform1i(app->programUniformTexture, 0);
+    //        glActiveTexture(GL_TEXTURE0);
+    //        GLuint textureHandle = app->textures[app->diceTexIdx].handle;
+    //        glBindTexture(GL_TEXTURE_2D, textureHandle);
+    //        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    //        glBindVertexArray(0);
+    //        glUseProgram(0);
+    //            // - bind the texture into unit 0
+    //            //   (...and make its texture sample from unit 0)
+    //            // - bind the vao
+    //            // - glDrawElements() !!!
+    //        }
+    //        break;
+  
+    Program texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+    if (app->mode == Mode::DEFERRED) {
+        texturedMeshProgram = app->programs[app->sphereMeshProgramIdx];
     }
 
-    //Camera settings
+    glUseProgram(texturedMeshProgram.handle);
+
+    float timeValue = glfwGetTime();
+    float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+    int vertexColorLocation = glGetUniformLocation(texturedMeshProgram.handle, "alpha");
+    glUniform1f(vertexColorLocation, greenValue);
+
+    //LIGHTS
+    int lightsCountLocation = glGetUniformLocation(texturedMeshProgram.handle, "lightCount");
+    glUniform1ui(lightsCountLocation, app->lights.size());
+
+    int lightNum = 0;
+
+    for (int i = 0; i < app->lights.size(); i++)
+    {
+        int location = -1;
+        std::string posStr = "lights[" + std::to_string(lightNum) + "]";
+        location = glGetUniformLocation(texturedMeshProgram.handle, (posStr + ".type").c_str());
+        glUniform1ui(location, (u32)app->lights[i].type);
+        location = glGetUniformLocation(texturedMeshProgram.handle, (posStr + ".color").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].color));
+        location = glGetUniformLocation(texturedMeshProgram.handle, (posStr + ".position").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].position));
+        location = glGetUniformLocation(texturedMeshProgram.handle, (posStr + ".direction").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].direction));
+        lightNum++;
+    }
+
+    //Camera to Shder
+    int cameraLocation = glGetUniformLocation(texturedMeshProgram.handle, "uCameraPosition");
+    glUniform3fv(cameraLocation, 1, glm::value_ptr(app->camera.position));
+
+    //Matrix
     float aspectRatio = (float)app->displaySize.x / (float)app->displaySize.y;
     float znear = 0.1f;
     float zfar = 1000.0f;
-    mat4 projection =  glm::perspective(glm::radians(app->camera.zoom), aspectRatio, znear, zfar);
-    mat4 view =   glm::mat4(glm::mat3(app->camera.GetViewMatrix()));
+
+    mat4 projection = glm::perspective(glm::radians(app->camera.zoom), aspectRatio, znear, zfar);
+    mat4 view = app->camera.GetViewMatrix();
+
+    for (int i = 0; i < app->entities.size(); i++)
+    {
+
+        mat4 world = app->entities[i].worldMatrix;
+
+        world = TransformPositionScale(app->entities[i].position, vec3(0.45f));
+
+        int worldMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldMatrix");
+        glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, glm::value_ptr(world));
+
+        mat4 worldViewProjection = projection * view * world;
+
+        int worldProjectionMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldViewProjectionMatrix");
+        glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
+
+        RenderModel(app, app->entities[i], texturedMeshProgram);
+    }
+
 
 }
 
@@ -441,10 +471,12 @@ void RenderModel(App* app, Entity entity,Program texturedMeshProgram)
         u32 submeshMaterialIdx = model.materialIdx[i];
         Material& submeshMaterial = app->materials[submeshMaterialIdx];
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
-        glUniform1i(app->texturedMeshProgram_uTexture, 0);
-
+        if (submeshMaterial.albedoTextureIdx < app->textures.size()) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
+            int textureLocation = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
+            glUniform1i(textureLocation, 0);
+        }
         Submesh& submesh = mesh.submeshes[i];
         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
     }
@@ -861,4 +893,23 @@ void Camera::UpdateCameraVectors()
     // also re-calculate the Right and Up vector
     right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     up = glm::normalize(glm::cross(right, front));
+}
+
+Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, vec3 color)
+{
+    Light light;
+    light.type = lightType;
+    light.position = position;
+    light.color = color;
+    light.direction = direction;
+
+    Entity entity;
+    entity.position = position;
+
+    //if (lightType == LightType::LightType_Directional) { entity.modelIndex = app->directionalLightModel; }
+    //else if (lightType == LightType::LightType_Point) { entity.modelIndex = app->sphereModel; }
+
+    light.entity = entity;
+
+    return light;
 }

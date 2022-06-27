@@ -200,9 +200,8 @@ struct Light
 
 enum Mode
 {
-    Mode_TexturedQuad,
-    Mode_Count,
-    Mode_Mesh
+    FORWARD,
+    DEFERRED,
 };
 
 struct App
@@ -229,8 +228,10 @@ struct App
     std::vector<Material>   materials;
     std::vector<Mesh>       meshes;
     std::vector<Model>      models;
-    std::vector<Entity> entities;
-    std::vector<Light>    lights;
+    std::vector<Entity>     entities;
+    std::vector<Light>      lights;
+
+    Light light;
 
     Entity mainEntity;
 
@@ -238,6 +239,7 @@ struct App
     u32 texturedGeometryProgramIdx;
 
     u32 texturedMeshProgramIdx;
+    u32 sphereMeshProgramIdx;
     
     // texture indices
     u32 diceTexIdx;
@@ -287,7 +289,8 @@ u32 LoadModel(App* app, const char* filename);
 
 u8 LoadProgramAttributes(Program& program);
 
-Buffer CreateBuffer(u32 size, GLenum type, GLenum usage);
+
+Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, vec3 color);
 
 mat4 TransformScale(const vec3& scaleFactors);
 

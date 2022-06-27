@@ -94,7 +94,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="WorkingDir\shaders.glsl">
+    <None Include="WorkingDir\Shaders\forward_shader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="WorkingDir\Shaders\deferred_shader.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
