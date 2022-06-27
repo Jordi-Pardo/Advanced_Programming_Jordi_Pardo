@@ -20,6 +20,28 @@ typedef glm::ivec3 ivec3;
 typedef glm::ivec4 ivec4;
 typedef glm::mat4 mat4;
 
+struct VertexV3V2
+{
+    vec3 pos;
+    vec2 uv;
+};
+
+struct Quad
+{
+    GLuint vao;
+
+    GLuint embeddedVertices;
+    GLuint embeddedElements;
+
+    VertexV3V2 vertices[4] = { vec3(-1.0f, -1.0f, 0.0f),  vec2(0.0f, 0.0f),
+                               vec3(1.0f, -1.0f, 0.0f),  vec2(1.0f, 0.0f),
+                               vec3(1.0f,  1.0f, 0.0f),  vec2(1.0f, 1.0f),
+                               vec3(-1.0f,  1.0f, 0.0f),  vec2(0.0f, 1.0f)
+    };
+
+    u16 indices[6] = { 0, 1, 2, 0, 2, 3 };
+};
+
 enum class RenderTargetsMode
 {
     ALBEDO,
@@ -233,10 +255,22 @@ struct App
 
     Light light;
 
+    Quad quad;
+    //Framebuffers
+    GLuint colorAttachmentHandle;
+    GLuint depthAttachmentHandle;
+    GLuint framebufferHandle;
+
+
     Entity mainEntity;
+
+    //Final Quad Textures
+    u32 deferredQuadProgramIdx;
 
     // program indices
     u32 texturedGeometryProgramIdx;
+    u32 deferredProgramIdx;
+    u32 forwardMeshProgramIdx;
 
     u32 texturedMeshProgramIdx;
     u32 sphereMeshProgramIdx;
@@ -279,6 +313,8 @@ void Update(App* app);
 
 void Render(App* app);
 
+void DrawDice(App* app);
+
 void RenderModel(App* app,Entity model, Program texturedMeshProgram);
 
 u32 LoadTexture2D(App* app, const char* filepath);
@@ -289,6 +325,9 @@ u32 LoadModel(App* app, const char* filename);
 
 u8 LoadProgramAttributes(Program& program);
 
+void GenerateQuad(App* app);
+void DrawFinalQuad(App* app);
+void RenderQuad(App* app);
 
 Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, vec3 color);
 

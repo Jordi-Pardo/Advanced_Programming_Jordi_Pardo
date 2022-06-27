@@ -36,6 +36,9 @@ void main()
     vNormal = mat3(transpose(inverse(model))) * aNormal;
     vViewDir  = uCameraPosition - vPosition;
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0f);
+    //gl_Position = vec4(aPosition,8.0f);
+
+	//gl_Position.z = -gl_Position.z;
 
 }
 
@@ -95,7 +98,7 @@ void main()
 
 
 
-	//oColor = vec4(1,0,0,alpha); //texture(uTexture,vTexCoord);
+	//oColor = texture(uTexture,vTexCoord);
 	
 	//oColor = vec4(vNormal,1.0);
 	//oColor = vec4(lights[0].color,1.0);
@@ -154,7 +157,44 @@ vec3 CalculateDirectionalLight(Light light, vec3 normal, vec3 viewDir)
 #endif
 #endif
 
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+#ifdef TEXTURED_GEOMETRY
 
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+// TODO: Write your vertex shader here
+layout(location=0) in vec3 aPosition;
+layout(location=1) in vec2 aTexCoord;
+
+out vec2 vTexCoord;
+
+
+
+void main()
+{
+
+	vTexCoord = aTexCoord;
+	gl_Position = vec4(aPosition,1.0);
+}
+
+#elif defined(FRAGMENT) ///////////////////////////////////////////////
+
+// TODO: Write your fragment shader here
+in vec2 vTexCoord;
+uniform sampler2D uTexture;
+
+layout(location = 0) out vec4 oColor;
+
+void main()
+{
+	oColor = texture(uTexture,vTexCoord);
+}
+
+
+#endif
+#endif
 
 // NOTE: You can write several shaders in the same file if you want as
 // long as you embrace them within an #ifdef block (as you can see above).
