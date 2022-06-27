@@ -249,7 +249,15 @@ void Init(App* app)
     entity.roughness = 0.75f;
     entity.modelIndex = app->model;
     app->mainEntity = entity;
-    
+    app->entities.push_back(entity);
+
+    Entity entity2;
+    entity2.position = vec3(2.0f, 0.0f, 0.0f);
+    app->model = LoadModel(app, "Patrick/Patrick.obj");
+    entity2.metallic = 1.0f;
+    entity2.roughness = 0.75f;
+    entity2.modelIndex = app->model;
+    app->entities.push_back(entity2);
 
     //app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
 
@@ -295,13 +303,34 @@ void Gui(App* app)
         ImGui::EndCombo();
     }
 
+    if (ImGui::TreeNode("Entites")) {
+
+        for (int i = 0; i < app->entities.size(); i++)
+        {
+            ImGui::PushID(i);
+            ImGui::Text("Entities %i", i);
+
+            Entity& entity = app->entities[i];
+            float position[3] = { entity.position.x, entity.position.y, entity.position.z };
+            ImGui::DragFloat3("Position", position, 0.1f, -20000000000000000.0f, 200000000000000000000.0f);
+            entity.position = vec3(position[0], position[1], position[2]);
+
+            ImGui::PopID();
+        }
+
+        ImGui::TreePop();
+    }
+
+
+
+
     ImGui::End();
 }
 
 void Update(App* app)
 {
     // You can handle app->input keyboard/mouse here
-    app->mainEntity.position = vec3(0.0, 0.0, 0.0);
+    //app->mainEntity.position = vec3(1.0, 0.0, 0.0);
 
 }
 
@@ -366,19 +395,25 @@ void Render(App* app)
             mat4 projection = glm::perspective(glm::radians(app->camera.zoom), aspectRatio, znear, zfar);
             mat4 view = app->camera.GetViewMatrix();
 
-            mat4 world = app->mainEntity.worldMatrix;
-            
-            world = TransformPositionScale(app->mainEntity.position, vec3(0.45f));
+            for (int i = 0; i < app->entities.size(); i++)
+            {
 
-            int worldMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldMatrix");
-            glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, glm::value_ptr(world));
+                mat4 world = app->entities[i].worldMatrix;
 
-            mat4 worldViewProjection = projection * view * world;
+                world = TransformPositionScale(app->entities[i].position, vec3(0.45f));
 
-            int worldProjectionMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldViewProjectionMatrix");
-            glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
+                int worldMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldMatrix");
+                glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, glm::value_ptr(world));
 
-            RenderModel(app,app->mainEntity, texturedMeshProgram);
+                mat4 worldViewProjection = projection * view * world;
+
+                int worldProjectionMatrixLocation = glGetUniformLocation(texturedMeshProgram.handle, "uWorldViewProjectionMatrix");
+                glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
+
+                RenderModel(app, app->entities[i], texturedMeshProgram);
+            }
+
+
            
 
             break;
