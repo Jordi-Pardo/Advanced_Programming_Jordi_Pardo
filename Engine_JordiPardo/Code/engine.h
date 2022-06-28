@@ -84,7 +84,7 @@ public:
     float yaw = -90.0f;
     float pitch = 0.0f;
 
-    float movementSpeed = 0.5f;
+    float movementSpeed = 1.f;
     float mouseSensitivity = 0.5f;
     float zoom = 0.5f;
 
@@ -185,14 +185,6 @@ struct Model {
     std::vector<u32> materialIdx;
 };
 
-struct Buffer
-{
-    GLuint handle;
-    GLenum type;
-    u32 size;
-    u32 head;
-    void* data;
-};
 
 enum class LightType
 {
@@ -256,12 +248,9 @@ struct App
     std::vector<Model>      models;
     std::vector<Entity>     entities;
     std::vector<Light>      lights;
-    
-    vec3 rotation;
-
-    Light light;
 
     Quad quad;
+
     //Framebuffers
     GLuint framebufferHandle;
 
@@ -271,10 +260,10 @@ struct App
     GLuint depthAttachmentHandle;
     GLuint finalRenderAttachmentHandle;
 
-
     Entity mainEntity;
 
     //Final Quad Textures
+    u32 cubemapProgramIdx;
     u32 deferredQuadProgramIdx;
 
     // program indices
@@ -305,8 +294,6 @@ struct App
     u32 model;
     u32 sphereModel;
     u32 directionalLight;
-    u32 bufferHandle;
-    Buffer cbuffer;
 
 
     // Location of the texture uniform in the textured quad shader
@@ -341,10 +328,6 @@ u32 LoadModel(App* app, const char* filename);
 
 u8 LoadProgramAttributes(Program& program);
 
-void GenerateQuad(App* app);
-void DrawFinalQuad(App* app);
-void RenderQuad(App* app);
-
 void HandleInput(App* app);
 
 Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, vec3 color);
@@ -353,10 +336,4 @@ mat4 TransformScale(const vec3& scaleFactors);
 
 mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors);
 mat4 TransformPositionRotationScale(const vec3& pos, const vec3& rotation, const vec3& scaleFactors);
-
-//Assimp
-//void ProcessAssimpMesh(const aiScene* scene, aiMesh* mesh, Mesh* myMesh, u32 baseMeshMaterialIndex, std::vector<u32>& submeshMaterialIndices);
-//void ProcessAssimpMaterial(App* app, aiMaterial* material, Material& myMaterial, String directory);
-//void ProcessAssimpNode(const aiScene* scene, aiNode* node, Mesh* myMesh, u32 baseMeshMaterialIndex, std::vector<u32>& submeshMaterialIndices);
-//u32 LoadModel(App* app, const char* filename);
 

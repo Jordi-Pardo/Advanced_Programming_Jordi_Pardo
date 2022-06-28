@@ -192,7 +192,7 @@ void Init(App* app)
 
     // TODO: Initialize your resources here!
     // - vertex buffers
-
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     const VertexV3V2 vertices[] = {
         {glm::vec3(-1.,-1.,0.0), glm::vec2(0.0,0.0) },
@@ -251,13 +251,13 @@ void Init(App* app)
 
 
     //Directional
-    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(2.5f, 3.0f, 0.0f), vec3(0.2f, 0.250f, 0.8f), vec3(0.9f, 0.9f, 0.9f)));
-    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(-2.9f, 2.75f, -2.0f), vec3(1.0f, 0.0f, 1.0f), vec3(0.9f, 0.5f, 0.5f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(2.5f, 1.0f, 0.0f), vec3(0.2f, 0.250f, 0.8f), vec3(0.5f, 0.5f, 0.5f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(-2.9f, 1.75f, -2.0f), vec3(1.0f, 0.0f, 1.0f), vec3(0.3f, 0.3f, 0.3f)));
 
     //Point
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.0f, 0.0f)));
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.0f, 0.5f, 0.0f)));
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.0f, 0.0f, 0.5f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-2.0f, 0.0, 1.0f), vec3(1.0f), vec3(0.2f, 0.0f, 0.0f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(2.0f, 0.0, 1.0f), vec3(1.0f), vec3(0.0f, 0.2f, 0.0f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.0f, 2.0, 1.0f), vec3(1.0f), vec3(0.0f, 0.0f, 0.2f)));
 
 
     // - programs (and retrieve uniform indices)
@@ -268,31 +268,13 @@ void Init(App* app)
     Program& forwardGeometryProgram = app->programs[app->forwardQuadProgramIdx];
     
     Entity entity;
-    entity.position = vec3(0.0f, 0.0f, 0.0f);
+    entity.position = vec3(0.0f, 0.0f, -0.5f);
     app->model = LoadModel(app, "Patrick/Patrick.obj");
     entity.metallic = 2.0f;
     entity.roughness = 2.75f;
     entity.modelIndex = app->model;
     app->mainEntity = entity;
     app->entities.push_back(entity);
-
-    //Entity quadLight;
-    //quadLight.position = vec3(1.0f,0.0f,0.0f);
-    //quadLight.modelIndex = app->directionalLight;
-    //app->entities.push_back(quadLight);
-
-    //for (int i = 1; i < app->lights.size(); i++)
-    //{
-    //    Entity entity2;
-    //    entity2.position = app->lights[i].position;
-    //    entity2.metallic = 0.0f;
-    //    entity2.roughness = 0.0f;
-    //    entity2.modelIndex = app->sphereModel;
-    //    app->entities.push_back(entity2);
-    //}
-
-    app->rotation = vec3(1.0f, 0.0f, 0.0f);
-    
 
     //Render
     app->forwardMeshProgramIdx = LoadProgram(app, "Shaders/forward_shader.glsl", "FORWARD_SHADER");
@@ -308,7 +290,6 @@ void Init(App* app)
     app->depthProgramIdx = LoadProgram(app, "Shaders/depth_shader.glsl", "DEPTH_SHADER");
     Program& depthProgram = app->programs[app->depthProgramIdx];
     LoadProgramAttributes(depthProgram);
-
 
 
     //Framebuffers
@@ -510,6 +491,8 @@ void Update(App* app)
         app->lights[i].position = app->entities[i].position;
     }
 
+
+
 }
 
 void Render(App* app)
@@ -570,7 +553,6 @@ void Render(App* app)
 
         RenderModel(app, app->entities[i], programModel);
     }
-
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -1190,7 +1172,7 @@ void HandleInput(App* app)
         app->camera.ProcessMouseMovement(app->input.mouseDelta.x, -app->input.mouseDelta.y);
     }
 
-    //app->camera.ProcessMouseScroll(app->input.mouseDelta);
 }
+
 
 
