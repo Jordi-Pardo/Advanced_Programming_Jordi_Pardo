@@ -187,7 +187,7 @@ void Init(App* app)
     app->currentRenderTargetMode = RenderTargetsMode::ALBEDO;
 
 
-    app->renderMode = RenderMode::FORWARD;
+    app->renderMode = RenderMode::DEFERRED;
 
 
     //Directional
@@ -248,10 +248,10 @@ void Init(App* app)
     
 
     // - programs (and retrieve uniform indices)
-    app->deferredQuadProgramIdx = LoadProgram(app, "Shaders/deferred_shader.glsl", "DEFERRED_QUAD");
+    app->deferredQuadProgramIdx = LoadProgram(app, "Shaders/deferred_quad.glsl", "DEFERRED_QUAD");
     Program& texturedGeometryProgram = app->programs[app->deferredQuadProgramIdx];
 
-    app->forwardQuadProgramIdx = LoadProgram(app, "Shaders/forward_shader.glsl", "FORWARD_QUAD");
+    app->forwardQuadProgramIdx = LoadProgram(app, "Shaders/forward_quad.glsl", "FORWARD_QUAD");
     Program& forwardGeometryProgram = app->programs[app->forwardQuadProgramIdx];
     
     Entity entity;
@@ -678,7 +678,7 @@ void DrawDice(App* app)
     // - set the blending state
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glUniform1i(app->programUniformTexture, 0);
+    glUniform1i(app->programUniformTexture, 0);
 
     if (app->renderMode == RenderMode::FORWARD) {
         glActiveTexture(GL_TEXTURE0);
@@ -709,23 +709,23 @@ void DrawDice(App* app)
     else {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, app->colorAttachmentHandle);
-        GLuint colorTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uColor");
-        glUniform1i(colorTextureLocation, 0);
+        GLuint colorLocation = glGetUniformLocation(programTexturedGeometry.handle, "uColor");
+        glUniform1i(colorLocation, 0);
 
-        //glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, app->normalAttachmentHandle);
-        //GLuint normalsTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uNormals");
-        //glUniform1i(normalsTextureLocation, 1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, app->normalAttachmentHandle);
+        GLuint normalsTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uNormals");
+        glUniform1i(normalsTextureLocation, 1);
 
-        //glActiveTexture(GL_TEXTURE2);
-        //glBindTexture(GL_TEXTURE_2D, app->positionAttachmentHandle);
-        //GLuint positionTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uPosition");
-        //glUniform1i(positionTextureLocation, 2);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, app->positionAttachmentHandle);
+        GLuint positionTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uPosition");
+        glUniform1i(positionTextureLocation, 2);
 
-        //glActiveTexture(GL_TEXTURE3);
-        //glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
-        //GLuint depthTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uDepth");
-        //glUniform1i(depthTextureLocation, 3);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
+        GLuint depthTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uDepth");
+        glUniform1i(depthTextureLocation, 3);
     }
 
     //GLuint colorTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uColor");
