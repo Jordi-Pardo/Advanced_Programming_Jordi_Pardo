@@ -67,7 +67,6 @@ layout(location = 2) out vec4 rt2; //Position
 
 void main()
 {
-    //oColor = vec4(vec3(lights[0].color),1.0);
     oColor = texture(uTexture,vTexCoord);
     rt1 = vec4(vNormal,1.0f);
     rt2 = vec4(vPosition,1.0f);

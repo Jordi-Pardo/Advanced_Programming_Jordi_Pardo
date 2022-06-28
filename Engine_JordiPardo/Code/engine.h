@@ -321,6 +321,10 @@ void Update(App* app);
 
 void Render(App* app);
 
+void PassCameraPositionToCurrentProgram(Program& programModel, App* app);
+
+void PassLightsToCurrentProgram(Program& programModel, App* app);
+
 void DrawDice(App* app);
 
 void RenderModel(App* app,Entity model, Program texturedMeshProgram);

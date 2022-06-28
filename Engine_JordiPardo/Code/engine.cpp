@@ -512,29 +512,10 @@ void Render(App* app)
     glUseProgram(programModel.handle);
 
     //LIGHTS
-    int lightsCountLocation = glGetUniformLocation(programModel.handle, "lightCount");
-    glUniform1ui(lightsCountLocation, app->lights.size());
-
-    int lightNum = 0;
-
-    for (int i = 0; i < app->lights.size(); i++)
-    {
-        int location = -1;
-        std::string posStr = "lights[" + std::to_string(lightNum) + "]";
-        location = glGetUniformLocation(programModel.handle, (posStr + ".type").c_str());
-        glUniform1ui(location, (u32)app->lights[i].type);
-        location = glGetUniformLocation(programModel.handle, (posStr + ".color").c_str());
-        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].color));
-        location = glGetUniformLocation(programModel.handle, (posStr + ".position").c_str());
-        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].position));
-        location = glGetUniformLocation(programModel.handle, (posStr + ".direction").c_str());
-        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].direction));
-        lightNum++;
-    }
+    PassLightsToCurrentProgram(programModel, app);
 
     //Camera to Shder
-    int cameraLocation = glGetUniformLocation(programModel.handle, "uCameraPosition");
-    glUniform3fv(cameraLocation, 1, glm::value_ptr(app->camera.position));
+    PassCameraPositionToCurrentProgram(programModel, app);
 
     //Matrix
     float aspectRatio = (float)app->displaySize.x / (float)app->displaySize.y;
@@ -563,86 +544,40 @@ void Render(App* app)
     }
 
 
-
-    ////DEFERRED
-    //else
-    //{
-    //    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 1, -1, "Patrick Model");
-
-    //    glBindFramebuffer(GL_FRAMEBUFFER, app->framebufferHandle);
-
-    //    GLuint drawBuffers[] = { app->colorAttachmentHandle, app->normalAttachmentHandle };
-
-    //    glDrawBuffers(ARRAY_COUNT(drawBuffers), drawBuffers);
-
-    //    glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
-    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //    glEnable(GL_DEPTH_TEST);
-
-    //    //Rendering Models
-    //    Program programModel = app->programs[app->deferredProgramIdx];
-
-    //    glUseProgram(programModel.handle);
-
-
-    //    //LIGHTS
-    //    int lightsCountLocation = glGetUniformLocation(programModel.handle, "lightCount");
-    //    glUniform1ui(lightsCountLocation, app->lights.size());
-
-    //    int lightNum = 0;
-
-    //    for (int i = 0; i < app->lights.size(); i++)
-    //    {
-    //        int location = -1;
-    //        std::string posStr = "lights[" + std::to_string(lightNum) + "]";
-    //        location = glGetUniformLocation(programModel.handle, (posStr + ".type").c_str());
-    //        glUniform1ui(location, (u32)app->lights[i].type);
-    //        location = glGetUniformLocation(programModel.handle, (posStr + ".color").c_str());
-    //        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].color));
-    //        location = glGetUniformLocation(programModel.handle, (posStr + ".position").c_str());
-    //        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].position));
-    //        location = glGetUniformLocation(programModel.handle, (posStr + ".direction").c_str());
-    //        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].direction));
-    //        lightNum++;
-    //    }
-
-    //    //Camera to Shder
-    //    int cameraLocation = glGetUniformLocation(programModel.handle, "uCameraPosition");
-    //    glUniform3fv(cameraLocation, 1, glm::value_ptr(app->camera.position));
-
-    //    //Matrix
-    //    float aspectRatio = (float)app->displaySize.x / (float)app->displaySize.y;
-    //    float znear = 0.1f;
-    //    float zfar = 1000.0f;
-
-    //    mat4 projection = glm::perspective(glm::radians(app->camera.zoom), aspectRatio, znear, zfar);
-    //    mat4 view = app->camera.GetViewMatrix();
-
-    //    for (int i = 0; i < app->entities.size(); i++)
-    //    {
-
-    //        mat4 world = app->entities[i].worldMatrix;
-
-    //        world = TransformPositionScale(app->entities[i].position, vec3(0.45f));
-
-    //        int worldMatrixLocation = glGetUniformLocation(programModel.handle, "uWorldMatrix");
-    //        glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, glm::value_ptr(world));
-
-    //        mat4 worldViewProjection = projection * view * world;
-
-    //        int worldProjectionMatrixLocation = glGetUniformLocation(programModel.handle, "uWorldViewProjectionMatrix");
-    //        glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
-
-    //        RenderModel(app, app->entities[i], programModel);
-    //    }
-    //    glPopDebugGroup();
-
-    //}
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // TODO: Draw your textured quad here!
-// - clear the framebuffer
     DrawDice(app);
 
+}
+
+void PassCameraPositionToCurrentProgram(Program& programModel, App* app)
+{
+    int cameraLocation = glGetUniformLocation(programModel.handle, "uCameraPosition");
+    glUniform3fv(cameraLocation, 1, glm::value_ptr(app->camera.position));
+}
+
+void PassLightsToCurrentProgram(Program& programModel, App* app)
+{
+    int lightsCountLocation = glGetUniformLocation(programModel.handle, "lightCount");
+    glUniform1ui(lightsCountLocation, app->lights.size());
+
+    int lightNum = 0;
+
+    for (int i = 0; i < app->lights.size(); i++)
+    {
+        int location = -1;
+        std::string posStr = "lights[" + std::to_string(lightNum) + "]";
+        location = glGetUniformLocation(programModel.handle, (posStr + ".type").c_str());
+        glUniform1ui(location, (u32)app->lights[i].type);
+        location = glGetUniformLocation(programModel.handle, (posStr + ".color").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].color));
+        location = glGetUniformLocation(programModel.handle, (posStr + ".position").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].position));
+        location = glGetUniformLocation(programModel.handle, (posStr + ".direction").c_str());
+        glUniform3fv(location, 1, glm::value_ptr(app->lights[i].direction));
+        lightNum++;
+    }
 }
 
 void DrawDice(App* app)
@@ -672,6 +607,9 @@ void DrawDice(App* app)
     if (app->renderMode == RenderMode::DEFERRED) {
         int renderModeLocation = glGetUniformLocation(programTexturedGeometry.handle, "renderTargetMode");
         glUniform1ui(renderModeLocation, (u32)app->currentRenderTargetMode);
+
+        PassLightsToCurrentProgram(programTexturedGeometry, app);
+        PassCameraPositionToCurrentProgram(programTexturedGeometry, app);
     }
 
 
