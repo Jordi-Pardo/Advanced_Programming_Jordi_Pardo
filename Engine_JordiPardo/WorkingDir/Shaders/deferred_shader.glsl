@@ -129,10 +129,13 @@ in vec3 vNormal;
 in vec3 vViewDir;
 in vec3 vPosition;
 
-uniform sampler2D uTexture;
+uniform sampler2D uColor;
 uniform float alpha;
 uniform Light lights[5];
 uniform unsigned int lightCount;
+uniform unsigned int renderTargetMode;
+
+
 
 layout(location = 0) out vec4 oColor;
 
@@ -140,7 +143,8 @@ layout(location = 0) out vec4 oColor;
 
 void main()
 {
-  oColor = texture(uTexture, vTexCoord);
+    vec3 vColor = vec3(texture(uColor, vTexCoord));
+    oColor = texture(vColor, vTexCoord);
 }
 
 #endif

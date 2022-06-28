@@ -62,16 +62,21 @@ uniform sampler2D uTexture;
 uniform float alpha;
 uniform Light lights[5];
 uniform unsigned int lightCount;
-layout(location = 0) out vec4 oColor;
+
+layout(location = 0) out vec4 rt0; //Albedo 
+layout(location = 1) out vec4 rt1; //Normals 
+layout(location = 2) out vec4 rt2; //Position 
+layout(location = 3) out vec4 rt3; //Final Render 
 
 vec3 CalculateDirectionalLight(Light light, vec3 normal, vec3 viewDir);
 vec3 CalculatePointLight(Light light, vec3 normal, vec3 viewDir);
 
 void main()
 {
-    vec4 finalColor = vec4(vec3(0.0), 1.0);
-    vec4 textureColor = texture(uTexture,vTexCoord);
-    oColor = vec4(vec3(0.0), 1.0);
+    rt0 = texture(uTexture,vTexCoord);
+    rt1 = vec4(vNormal,1.0f);
+    rt2 = vec4(vPosition, 1.0);
+    rt3 = vec4(vec3(0.0), 1.0);
 
     for(uint i = 0; i < lightCount; ++i)
     {
@@ -86,24 +91,11 @@ void main()
         {
             lightAmount = CalculatePointLight(lights[i], normalize(vNormal), vViewDir);
         }
-
-        oColor.rgb += lightAmount * textureColor.rgb;
-        //oColor = vec4(lightDir,1.0);
+        rt3.rgb += lightAmount * rt0.rgb;
     }
-
-        //vec3 lightDir = normalize(lights[0].direction);
-        //vec3 lightAmount = vec3(0.0f); 
-        //lightAmount = CalculatePointLight(lights[0], normalize(vNormal), vViewDir);
-        //oColor = vec4(lightAmount,1.0) * textureColor;
-
-
-
-	//oColor = texture(uTexture,vTexCoord);
-	
-	//oColor = vec4(vNormal,1.0);
-	//oColor = vec4(lights[0].color,1.0);
-	//oColor = vec4(vTexCoord.y);
 }
+
+
 vec3 CalculatePointLight(Light light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = vPosition - light.position;
@@ -157,44 +149,74 @@ vec3 CalculateDirectionalLight(Light light, vec3 normal, vec3 viewDir)
 #endif
 #endif
 
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
-#ifdef TEXTURED_GEOMETRY
+
+#ifdef SHOW_DEPTH
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
-// TODO: Write your vertex shader here
-layout(location=0) in vec3 aPosition;
-layout(location=1) in vec2 aTexCoord;
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoord;
 
 out vec2 vTexCoord;
 
-
-
 void main()
 {
-
-	vTexCoord = aTexCoord;
-	gl_Position = vec4(aPosition,1.0);
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-// TODO: Write your fragment shader here
 in vec2 vTexCoord;
+
 uniform sampler2D uTexture;
 
 layout(location = 0) out vec4 oColor;
 
 void main()
 {
-	oColor = texture(uTexture,vTexCoord);
+    oColor = vec4(vec3(texture(uTexture, vTexCoord).r), 1.0);
 }
 
+#endif
+#endif
+
+#ifdef FORWARD_QUAD
+
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoord;
+
+out vec2 vTexCoord;
+
+void main()
+{
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 1.0);
+}
+
+#elif defined(FRAGMENT) ///////////////////////////////////////////////
+
+in vec2 vTexCoord;
+
+uniform sampler2D uColor;
+
+layout(location = 0) out vec4 oColor;
+
+void main()
+{
+    oColor = texture(uColor, vTexCoord);
+}
 
 #endif
 #endif
+
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
 
 // NOTE: You can write several shaders in the same file if you want as
 // long as you embrace them within an #ifdef block (as you can see above).

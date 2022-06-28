@@ -45,7 +45,10 @@ struct Quad
 enum class RenderTargetsMode
 {
     ALBEDO,
-    NORMALS
+    NORMALS,
+    POSITION,
+    DEPTH,
+    FINAL_RENDER
 };
 
 //Camera Setting
@@ -220,7 +223,7 @@ struct Light
 };
 
 
-enum Mode
+enum RenderMode
 {
     FORWARD,
     DEFERRED,
@@ -257,9 +260,13 @@ struct App
 
     Quad quad;
     //Framebuffers
-    GLuint colorAttachmentHandle;
-    GLuint depthAttachmentHandle;
     GLuint framebufferHandle;
+
+    GLuint colorAttachmentHandle;
+    GLuint normalAttachmentHandle;
+    GLuint positionAttachmentHandle;
+    GLuint depthAttachmentHandle;
+    GLuint finalRenderAttachmentHandle;
 
 
     Entity mainEntity;
@@ -268,9 +275,10 @@ struct App
     u32 deferredQuadProgramIdx;
 
     // program indices
-    u32 texturedGeometryProgramIdx;
+    u32 forwardQuadProgramIdx;
     u32 deferredProgramIdx;
     u32 forwardMeshProgramIdx;
+    u32 depthProgramIdx;
 
     u32 texturedMeshProgramIdx;
     u32 sphereMeshProgramIdx;
@@ -283,7 +291,7 @@ struct App
     u32 magentaTexIdx;
 
     // Mode
-    Mode mode;
+    RenderMode renderMode;
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)
