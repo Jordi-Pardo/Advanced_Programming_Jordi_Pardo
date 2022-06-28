@@ -196,8 +196,8 @@ void Init(App* app)
 
     //Point
     app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.0f, 0.2f, 0.0f)));
-    //app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.2f, 0.5f)));
-    //app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.33f, 0.2f, 0.05f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.2f, 0.5f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.33f, 0.2f, 0.05f)));
 
     // TODO: Initialize your resources here!
     // - vertex buffers
@@ -257,21 +257,23 @@ void Init(App* app)
     Entity entity;
     entity.position = vec3(0.0f, 0.0f, 0.0f);
     app->model = LoadModel(app, "Patrick/Patrick.obj");
-    entity.metallic = 1.0f;
-    entity.roughness = 0.75f;
+    entity.metallic = 2.0f;
+    entity.roughness = 2.75f;
     entity.modelIndex = app->model;
     app->mainEntity = entity;
     app->entities.push_back(entity);
 
-    //Entity entity2;
-    //entity2.position = vec3(2.0f, 0.0f, 0.0f);
-    //app->model = LoadModel(app, "Primitives/Sphere/sphere.obj");
-    //entity2.metallic = 1.0f;
-    //entity2.roughness = 0.75f;
-    //entity2.modelIndex = app->model;
-    //app->entities.push_back(entity2);
+    for (int i = 1; i < app->lights.size(); i++)
+    {
+        Entity entity2;
+        entity2.position = app->lights[i].position;
+        app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
+        entity2.metallic = 0.0f;
+        entity2.roughness = 0.0f;
+        entity2.modelIndex = app->sphereModel;
+        app->entities.push_back(entity2);
+    }
 
-    //app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
     
 
     //Render
@@ -285,7 +287,7 @@ void Init(App* app)
     LoadProgramAttributes(deferredMeshProgram);
 
     //DEPTH
-    app->depthProgramIdx = LoadProgram(app, "Shaders/forward_shader.glsl", "SHOW_DEPTH");
+    app->depthProgramIdx = LoadProgram(app, "Shaders/depth_shader.glsl", "DEPTH_SHADER");
     Program& depthProgram = app->programs[app->depthProgramIdx];
     LoadProgramAttributes(depthProgram);
 
@@ -332,7 +334,7 @@ void Init(App* app)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0); 
     
-    //Color Attachment
+    //Normal Attachment
     glGenTextures(1, &app->normalAttachmentHandle);
     glBindTexture(GL_TEXTURE_2D, app->normalAttachmentHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -341,8 +343,9 @@ void Init(App* app)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);   
-    //Color Attachment
+    glBindTexture(GL_TEXTURE_2D, 0);  
+
+    //Position Attachment
     glGenTextures(1, &app->positionAttachmentHandle);
     glBindTexture(GL_TEXTURE_2D, app->positionAttachmentHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -351,8 +354,9 @@ void Init(App* app)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);   
-    //Color Attachment
+    glBindTexture(GL_TEXTURE_2D, 0);  
+
+    //Final Render Attachment
     glGenTextures(1, &app->finalRenderAttachmentHandle);
     glBindTexture(GL_TEXTURE_2D, app->finalRenderAttachmentHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -403,10 +407,6 @@ void Init(App* app)
         }
         return;
     }
-
-    /*GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(ARRAY_COUNT(buffers), buffers);*/
-
 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -482,6 +482,13 @@ void Update(App* app)
     // You can handle app->input keyboard/mouse here
     //app->mainEntity.position = vec3(1.0, 0.0, 0.0);
 
+    HandleInput(app);
+
+    for (int i = 1; i < app->lights.size(); i++)
+    {
+        app->lights[i].position = app->entities[i].position;
+    }
+
 }
 
 void Render(App* app)
@@ -540,7 +547,7 @@ void Render(App* app)
         int worldProjectionMatrixLocation = glGetUniformLocation(programModel.handle, "uWorldViewProjectionMatrix");
         glUniformMatrix4fv(worldProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(worldViewProjection));
 
-        RenderModel(app, app->entities[0], programModel);
+        RenderModel(app, app->entities[i], programModel);
     }
 
 
@@ -1133,6 +1140,29 @@ Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, 
     light.entity = entity;
 
     return light;
+}
+
+void HandleInput(App* app)
+{
+    if (app->input.keys[K_W] == BUTTON_PRESSED) {
+        app->camera.ProcessKeyboard(Camera_State::CAMERA_FORWARD, app->deltaTime);
+    }
+    if (app->input.keys[K_A] == BUTTON_PRESSED) {
+        app->camera.ProcessKeyboard(Camera_State::CAMERA_LEFT, app->deltaTime);
+    }
+    if (app->input.keys[K_S] == BUTTON_PRESSED) {
+        app->camera.ProcessKeyboard(Camera_State::CAMERA_BACKWARD, app->deltaTime);
+    }
+    if (app->input.keys[K_D] == BUTTON_PRESSED) {
+        app->camera.ProcessKeyboard(Camera_State::CAMERA_RIGHT, app->deltaTime);
+    }
+
+    if (app->input.mouseButtons[LEFT] == BUTTON_PRESSED || app->input.mouseButtons[RIGHT] == BUTTON_PRESSED)
+    {
+        app->camera.ProcessMouseMovement(app->input.mouseDelta.x, -app->input.mouseDelta.y);
+    }
+
+    //app->camera.ProcessMouseScroll(app->input.mouseDelta);
 }
 
 

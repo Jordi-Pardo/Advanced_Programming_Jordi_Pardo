@@ -229,6 +229,7 @@ enum RenderMode
     DEFERRED,
 };
 
+
 struct App
 {
     // Loop
@@ -340,6 +341,8 @@ u8 LoadProgramAttributes(Program& program);
 void GenerateQuad(App* app);
 void DrawFinalQuad(App* app);
 void RenderQuad(App* app);
+
+void HandleInput(App* app);
 
 Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, vec3 color);
 
