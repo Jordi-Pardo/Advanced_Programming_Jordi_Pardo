@@ -256,6 +256,8 @@ struct App
     std::vector<Model>      models;
     std::vector<Entity>     entities;
     std::vector<Light>      lights;
+    
+    vec3 rotation;
 
     Light light;
 
@@ -302,6 +304,7 @@ struct App
     GLint uniformBufferAlignment;
     u32 model;
     u32 sphereModel;
+    u32 directionalLight;
     u32 bufferHandle;
     Buffer cbuffer;
 

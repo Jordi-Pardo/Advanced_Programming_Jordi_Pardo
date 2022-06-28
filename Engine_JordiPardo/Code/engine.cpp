@@ -184,20 +184,11 @@ u32 LoadTexture2D(App* app, const char* filepath)
 
 void Init(App* app)
 {
-    app->currentRenderTargetMode = RenderTargetsMode::ALBEDO;
+    app->currentRenderTargetMode = RenderTargetsMode::FINAL_RENDER;
 
 
-    app->renderMode = RenderMode::DEFERRED;
+    app->renderMode = RenderMode::FORWARD;
 
-
-    //Directional
-    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(2.5f, 3.0f, 0.0f), vec3(0.2f, 0.250f, 0.8f), vec3(0.9f, 0.9f, 0.9f)));
-    //app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(-2.9f, 2.75f, -2.0f), vec3(1.0f, 0.0f, 1.0f), vec3(0.9f, 0.5f, 0.5f)));
-
-    //Point
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.0f, 0.2f, 0.0f)));
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.2f, 0.5f)));
-    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.33f, 0.2f, 0.05f)));
 
     // TODO: Initialize your resources here!
     // - vertex buffers
@@ -246,6 +237,28 @@ void Init(App* app)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
     glBindVertexArray(0);
     
+    //Load Textures
+   // app->diceTexIdx = LoadTexture2D(app, "dice.png");
+    app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
+    app->blackTexIdx = LoadTexture2D(app, "color_black.png");
+    app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
+    app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
+
+
+    //Primitives
+    app->directionalLight = LoadModel(app, "Primitives/Quad/quad.obj");
+    app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
+
+
+    //Directional
+    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(2.5f, 3.0f, 0.0f), vec3(0.2f, 0.250f, 0.8f), vec3(0.9f, 0.9f, 0.9f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Directional, vec3(-2.9f, 2.75f, -2.0f), vec3(1.0f, 0.0f, 1.0f), vec3(0.9f, 0.5f, 0.5f)));
+
+    //Point
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(-1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.5f, 0.0f, 0.0f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(1.0f, 2.75, 2.2f), vec3(1.0f), vec3(0.0f, 0.5f, 0.0f)));
+    app->lights.push_back(CreateLight(app, LightType::LightType_Point, vec3(0.1f, 1.55, -0.2f), vec3(1.0f), vec3(0.0f, 0.0f, 0.5f)));
+
 
     // - programs (and retrieve uniform indices)
     app->deferredQuadProgramIdx = LoadProgram(app, "Shaders/deferred_quad.glsl", "DEFERRED_QUAD");
@@ -263,17 +276,22 @@ void Init(App* app)
     app->mainEntity = entity;
     app->entities.push_back(entity);
 
-    for (int i = 1; i < app->lights.size(); i++)
-    {
-        Entity entity2;
-        entity2.position = app->lights[i].position;
-        app->sphereModel = LoadModel(app, "Primitives/Sphere/sphere.obj");
-        entity2.metallic = 0.0f;
-        entity2.roughness = 0.0f;
-        entity2.modelIndex = app->sphereModel;
-        app->entities.push_back(entity2);
-    }
+    //Entity quadLight;
+    //quadLight.position = vec3(1.0f,0.0f,0.0f);
+    //quadLight.modelIndex = app->directionalLight;
+    //app->entities.push_back(quadLight);
 
+    //for (int i = 1; i < app->lights.size(); i++)
+    //{
+    //    Entity entity2;
+    //    entity2.position = app->lights[i].position;
+    //    entity2.metallic = 0.0f;
+    //    entity2.roughness = 0.0f;
+    //    entity2.modelIndex = app->sphereModel;
+    //    app->entities.push_back(entity2);
+    //}
+
+    app->rotation = vec3(1.0f, 0.0f, 0.0f);
     
 
     //Render
@@ -290,30 +308,6 @@ void Init(App* app)
     app->depthProgramIdx = LoadProgram(app, "Shaders/depth_shader.glsl", "DEPTH_SHADER");
     Program& depthProgram = app->programs[app->depthProgramIdx];
     LoadProgramAttributes(depthProgram);
-
-
-    //app->deferredQuadProgramIdx = LoadProgram(app, "Shaders/deferred_shader.glsl", "DEFERRED_QUAD");
-    //Program& deferredQuadProgram = app->programs[app->deferredQuadProgramIdx];
-    //LoadProgramAttributes(deferredQuadProgram);
-    //app->programUniformTexture = glGetUniformLocation(deferredQuadProgram.handle, "uTexture");
-
-    
-    //app->sphereMeshProgramIdx = LoadProgram(app, "Shaders/deferred_shader.glsl", "FORWARD_SHADER");
-    //Program& sphereMeshProgram = app->programs[app->sphereMeshProgramIdx];
-    //LoadProgramAttributes(sphereMeshProgram);
-    //texturedMeshProgram.vertexInputLayout.attributes.push_back({ 0,3 });
-    //texturedMeshProgram.vertexInputLayout.attributes.push_back({ 2,2 });
-
-    //GenerateQuad(app);
-
-    // - textures
-
-    app->diceTexIdx = LoadTexture2D(app, "dice.png");
-    app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
-    app->blackTexIdx = LoadTexture2D(app, "color_black.png");
-    app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
-    app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
-
 
 
 
@@ -425,6 +419,7 @@ void Gui(App* app)
     float cameraPosition[3] = { app->camera.position.x, app->camera.position.y, app->camera.position.z };
     ImGui::DragFloat3("Camera position", cameraPosition, 0.1f, -20000000000000000.0f, 200000000000000000000.0f);
     app->camera.position = vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+    
 
     const char* renderModeBuffers[] = { "FORWARD", "DEFERRED" };
     if (ImGui::BeginCombo("Render Mode", renderModeBuffers[(u32)app->renderMode]))
@@ -470,6 +465,32 @@ void Gui(App* app)
 
         ImGui::TreePop();
     }
+    if (ImGui::TreeNode("Lights")) {
+
+        for (int i = 0; i < app->lights.size(); i++)
+        {
+            ImGui::PushID(i);
+            ImGui::Text("Lights %i", i);
+
+            Light& light = app->lights[i];
+            if (light.type == LightType::LightType_Directional) 
+            {
+                float direction[3] = { light.direction.x, light.direction.y, light.direction.z };
+                ImGui::DragFloat3("Direction", direction, 0.1f, -20000000000000000.0f, 200000000000000000000.0f);
+                light.direction = vec3(direction[0], direction[1], direction[2]);
+            }
+
+            float color[3] = { light.color.r, light.color.g, light.color.b };
+            ImGui::ColorPicker3("Color", color);
+            light.color = vec3(color[0], color[1], color[2]);
+
+            ImGui::PopID();
+        }
+
+        ImGui::TreePop();
+    }
+
+
 
 
 
@@ -1134,6 +1155,13 @@ Light CreateLight(App* app, LightType lightType, vec3 position, vec3 direction, 
     Entity entity;
     entity.position = position;
 
+    if (light.type == LightType::LightType_Directional) {
+        entity.modelIndex = app->directionalLight;
+    }
+    else {
+        entity.modelIndex = app->sphereModel;
+    }
+    app->entities.push_back(entity);
     //if (lightType == LightType::LightType_Directional) { entity.modelIndex = app->directionalLightModel; }
     //else if (lightType == LightType::LightType_Point) { entity.modelIndex = app->sphereModel; }
 

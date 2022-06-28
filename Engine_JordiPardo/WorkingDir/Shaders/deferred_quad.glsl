@@ -59,6 +59,7 @@ void main()
     vec3 vPosition   = vec3(texture(uPosition, vTexCoord));
     vec3 viewDir     = uCameraPosition - vPosition;
     vec3 vNormal     = normalize(vec3(texture(uNormals, vTexCoord)));
+    float alpha      = texture(uNormals,vTexCoord).a;
     oColor = vec4(vec3(0.0f), 1.0f);
 
     switch(renderTargetMode)
@@ -68,21 +69,28 @@ void main()
         case 2: oColor = vec4(vPosition, 1.0f); break;
         case 3: oColor = vec4(vec3(texture(uDepth, vTexCoord).r),1.0); break;
         case 4: 
-        for(uint i = 0; i < lightCount; ++i)
-         {
-             vec3 lightDir = normalize(lights[i].direction);
-             vec3 lightAmount = vec3(0.0f);
+        if(alpha>=0.1)
+        {
+            for(uint i = 0; i < lightCount; ++i)
+             {
+                 vec3 lightDir = normalize(lights[i].direction);
+                 vec3 lightAmount = vec3(0.0f);
 
-            if(lights[i].type == 0)
-            {
-                lightAmount = CalculateDirectionalLight(lights[i], vPosition, normalize(vNormal), viewDir);
+                if(lights[i].type == 0)
+                {
+                    lightAmount = CalculateDirectionalLight(lights[i], vPosition, normalize(vNormal), viewDir);
+                }
+                else
+                {
+                    lightAmount = CalculatePointLight(lights[i], vPosition, normalize(vNormal), viewDir);
+                }
+                oColor.rgb += lightAmount * vColor.rgb;
             }
-            else
-            {
-                lightAmount = CalculatePointLight(lights[i], vPosition, normalize(vNormal), viewDir);
-         }
-            oColor.rgb += lightAmount * vColor.rgb;
-        }
+          }
+          else
+          {
+            oColor = vec4(vColor, 1.0f);
+          }
 
         break;
     }

@@ -22,8 +22,13 @@ uniform sampler2D uTexture;
 layout(location = 0) out vec4 oColor;
 
 void main()
-{
-    oColor = vec4(vec3(texture(uTexture, vTexCoord).r), 1.0);
+{   
+    float r = texture(uTexture, vTexCoord).r;
+    if(r < 0.9f){
+        r-= 0.2f;
+    }
+    vec3 vDepth = vec3(r);
+    oColor = vec4(vDepth, 1.0);
 }
 
 #endif
