@@ -471,27 +471,17 @@ void Gui(App* app)
         ImGui::TreePop();
     }
 
-
-
-
-
-
     ImGui::End();
 }
 
 void Update(App* app)
 {
-    // You can handle app->input keyboard/mouse here
-    //app->mainEntity.position = vec3(1.0, 0.0, 0.0);
-
     HandleInput(app);
 
     for (int i = 1; i < app->lights.size(); i++)
     {
         app->lights[i].position = app->entities[i].position;
     }
-
-
 
 }
 
@@ -556,9 +546,7 @@ void Render(App* app)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // TODO: Draw your textured quad here!
     DrawDice(app);
-
 }
 
 void PassCameraPositionToCurrentProgram(Program& programModel, App* app)
@@ -595,8 +583,6 @@ void DrawDice(App* app)
     glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 1, -1, "Dice Texture");
-    // - set the viewport
-    //glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
     // - bind the program 
     Program programTexturedGeometry = app->programs[app->forwardQuadProgramIdx];
@@ -675,10 +661,6 @@ void DrawDice(App* app)
         GLuint depthTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uDepth");
         glUniform1i(depthTextureLocation, 3);
     }
-
-    //GLuint colorTextureLocation = glGetUniformLocation(programTexturedGeometry.handle, "uColor");
-    //glUniform1i(colorTextureLocation, 0);   
-    
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
